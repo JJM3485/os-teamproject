@@ -94,9 +94,18 @@ class InputPanel(ttk.Frame):
         self.c_count += 1
         self.status_listbox.yview("end")
 
-    def start_sim(self):
+def start_sim(self):
         if not self.process_data or not self.core_data:
             messagebox.showwarning("경고", "프로세스와 코어를 최소 1개 이상 추가해주세요.")
             return
-        # app.py에 있는 start_simulation 함수를 호출해 데이터 전달
-        self.start_callback(self.process_data, self.core_data, self.algo_var.get())
+            
+        try:
+            # 입력창에 있는 값을 숫자로 변환 
+            tq_value = int(self.entry_tq.get())
+            if tq_value <= 0:
+                raise ValueError # 타임 퀀텀이 0 이하면 튕겨냄
+        except ValueError:
+            # 빈칸이거나 문자를 입력했을 때 뜨는 에러 메시지
+            messagebox.showerror("입력 오류", "Time Quantum은 1 이상의 숫자만 입력해야 합니다.")
+            return
+        self.start_callback(self.process_data, self.core_data, self.algo_var.get(), tq_value)

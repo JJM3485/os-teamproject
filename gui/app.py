@@ -25,7 +25,7 @@ class SimulatorApp(tk.Tk):
         
         self.scheduler = None
 
-    def start_simulation(self, process_data, core_data, algo_name, tq):
+    def start_simulation(self, process_data, core_data, algo_name, tq, alpha):
         # 시작 버튼을 눌렀을 때 1회 호출
         # 입력 데이터를 실제 객체로 변환
         processes = [Process(pid, at, bt) for pid, at, bt in process_data]
@@ -44,7 +44,7 @@ class SimulatorApp(tk.Tk):
         elif algo_name == "HRRN":
             self.scheduler = HRRNScheduler(processes, cores)
         elif algo_name == "Custom":
-            self.scheduler = CustomScheduler(processes, cores)
+            self.scheduler = CustomScheduler(processes, cores, time_quantum=tq, alpha=alpha)
         
         if self.scheduler:
             self.run_step() # 엔진 가동 시작

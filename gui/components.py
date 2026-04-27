@@ -49,10 +49,16 @@ class InputPanel(ttk.Frame):
         self.entry_tq.insert(0, "2")
         self.entry_tq.grid(row=9, column=1, pady=2)
         
-        ttk.Button(self, text="▶ 시뮬레이션 시작", command=self.start_sim).grid(row=10, column=0, columnspan=2, pady=10)
+        # Alpha 입력창 추가
+        ttk.Label(self, text="Alpha (Custom):").grid(row=10, column=0, sticky="e")
+        self.entry_alpha = ttk.Entry(self, width=8)
+        self.entry_alpha.insert(0, "0.5")
+        self.entry_alpha.grid(row=10, column=1, pady=2)
+
+        ttk.Button(self, text="▶ 시뮬레이션 시작", command=self.start_sim).grid(row=11, column=0, columnspan=2, pady=10)
 
         # 현황판
-        ttk.Label(self, text="[ 현재 추가된 항목 ]", font=("Arial", 10, "bold")).grid(row=11, column=0, columnspan=2, pady=(5, 5))
+        ttk.Label(self, text="[ 현재 추가된 항목 ]", font=("Arial", 10, "bold")).grid(row=12, column=0, columnspan=2, pady=(5, 5))
         
         list_frame = ttk.Frame(self)
         list_frame.grid(row=12, column=0, columnspan=2, sticky="nsew", padx=5)
@@ -102,10 +108,12 @@ class InputPanel(ttk.Frame):
             try:
                 # 입력창에 있는 값을 숫자로 변환 
                 tq_value = int(self.entry_tq.get())
+                alpha_value = float(self.entry_alpha.get())
+
                 if tq_value <= 0:
                     raise ValueError # 타임 퀀텀이 0 이하면 튕겨냄
             except ValueError:
                 # 빈칸이거나 문자를 입력했을 때 뜨는 에러 메시지
                 messagebox.showerror("입력 오류", "Time Quantum은 1 이상의 숫자만 입력해야 합니다.")
                 return
-            self.start_callback(self.process_data, self.core_data, self.algo_var.get(), tq_value)
+            self.start_callback(self.process_data, self.core_data, self.algo_var.get(), tq_value, alpha_value)

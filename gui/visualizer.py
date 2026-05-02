@@ -33,6 +33,12 @@ class ResultVisualizer(ttk.Frame):
         self.total_power_label = ttk.Label(power_frame, text="시스템 합계: 0.00 W", font=("Arial", 11, "bold"), foreground="blue")
         self.total_power_label.pack(anchor="e", pady=(5, 0))
 
+        time_frame = ttk.Frame(self)
+        time_frame.pack(side="right", padx=30, pady=5) # padx로 전력 텍스트와 간격 벌림
+
+        self.total_time_label = ttk.Label(time_frame, text="총 소요 시간: 0 초", font=("Arial", 12, "bold"), foreground="green")
+        self.total_time_label.pack(anchor="e", pady=(0, 5))
+
     def draw_gantt(self, cores):
         # 매 초마다 코어 기록을 읽어와 갱신
         self.canvas.delete("all")
@@ -70,6 +76,14 @@ class ResultVisualizer(ttk.Frame):
         for p in completed_procs:
             self.tree.insert("", "end", values=(f"P{p.p_id}", p.at, p.bt, p.wt, p.tt, f"{p.ntt:.2f}"))
             
+        if completed_procs:
+            # (도착 시간 + 반환 시간) 중 가장 큰 값이 최종 종료 시간
+            total_time = max(p.at + p.tt for p in completed_procs)
+        else:
+            total_time = 0
+            
+        self.total_time_label.config(text=f"총 소요 시간: {total_time} 초")
+        
         # 전력 계산
         p_power = sum(c.total_power_consumed for c in cores if c.core_type == 'P')
         e_power = sum(c.total_power_consumed for c in cores if c.core_type == 'E')

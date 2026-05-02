@@ -12,14 +12,14 @@ from scheduler.custom import CustomScheduler
 class SimulatorApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("멀티코어 프로세스 스케줄링 시뮬레이터")
+        self.title("알고리즘 과제 멀티코어 프로세스 스케줄링 시뮬레이터")
         self.geometry("900x600")
         
-        # 좌측: 입력 패널
+        # 입력 패널
         self.input_panel = InputPanel(self, self.start_simulation)
         self.input_panel.pack(side="left", fill="y", padx=10, pady=10)
         
-        # 우측: 결과 시각화 패널
+        # 결과 시각화 패널
         self.visualizer = ResultVisualizer(self)
         self.visualizer.pack(side="right", fill="both", expand=True, padx=10, pady=10)
         
@@ -32,7 +32,6 @@ class SimulatorApp(tk.Tk):
         cores = [Core(cid, ctype) for cid, ctype in core_data]
         
         # 알고리즘 선택
-        # 나중에 여기에 if algo_name == "FCFS": self.scheduler = FCFSScheduler(processes, cores) 형태로 연결
         if algo_name == "FCFS":
             self.scheduler = FCFSScheduler(processes, cores)
         elif algo_name == "RR":
@@ -49,10 +48,10 @@ class SimulatorApp(tk.Tk):
         if self.scheduler:
             self.run_step() # 엔진 가동 시작
         else:
-            print(f"[{algo_name}] 알고리즘이 아직 연결되지 않았습니다. 팀원들이 코드를 짜오면 app.py에 연결하세요.")
+            print(f"[{algo_name}] 알고리즘이 아직 연결되지 않았습니다.")
 
     def run_step(self):
-        # 0.2초마다 실제로 1Tick씩 움직이며 간트 차트를 그리는 무한 루프
+        # 0.2초마다 간트 차트를 그리는 무한 루프
         if self.scheduler and self.scheduler.tick():
             # 엔진이 1초 진행되었으므로 간트 차트를 그림
             self.visualizer.draw_gantt(self.scheduler.cores)

@@ -1,5 +1,5 @@
 class Process:
-    #운영체제에서 관리할 프로세스 제어 블록(PCB)
+    # 프로세스 제어 블록
     def __init__(self, p_id: int, arrival_time: int, burst_time: int):
         self.p_id = p_id
         self.at = arrival_time
@@ -14,7 +14,7 @@ class Process:
 
 
 class Core:
-    #P-Core와 E-Core의 특성을 구현
+    # P코어와 E코어의 특성을 구현
     def __init__(self, core_id: int, core_type: str):
         self.core_id = core_id
         self.core_type = core_type.upper()
@@ -22,9 +22,8 @@ class Core:
         
         self.total_power_consumed = 0.0
         self.is_awake = False
-        self.history = []  # GUI 간트 차트 렌더링을 위한 매 초 단위 프로세스 점유 기록
+        self.history = []  # 간트 차트 렌더링을 위한 초 단위 프로세스 점유 기록
         
-        # 물리적 스펙 분기 (P코어 E코어)
         if self.core_type == 'P':
             self.boot_power = 0.5
             self.run_power = 3.0
@@ -52,9 +51,9 @@ class Core:
         if self.assigned_process is not None:
             self.history.append(self.assigned_process.p_id)
             
-            # 남은 작업이 속도(2)보다 작아도 1초치 전력을 전부 소모하도록 방어 로직 적용
+            # 남은 작업이 속도보다 작아도 1초치 전력을 전부 소모하도록 방어 로직 적용
             self.total_power_consumed += self.run_power
             self.assigned_process.rt = max(0, self.assigned_process.rt - self.work_capacity)
         else:
             self.history.append(None)
-            self.is_awake = False  # 작업이 없으면 즉시 휴면 모드 전환 (전력 낭비 방지)
+            self.is_awake = False  # 작업이 없으면 즉시 휴면 모드 전환

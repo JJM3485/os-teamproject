@@ -1,90 +1,121 @@
 from scheduler.abstract_scheduler import AbstractScheduler
 
 class CustomScheduler(AbstractScheduler):
-    # 빈 코어에 먼저 할당하고, 일정 시간 이상 실행된 프로세스는 다시 ready_queue로 보내는 하이브리드 스케줄링
 
     def __init__(self, process_list, core_list, time_quantum=2, alpha=0.5):
         # 부모 클래스 초기화
         super().__init__(process_list, core_list)
 
-        # 한 프로세스가 연속으로 사용할 수 있는 최대 시간
         self.time_quantum = time_quantum
-
-        # 오래 기다린 프로세스의 우선순위를 얼마나 올릴지 정하는 값
         self.alpha = alpha
+        self.promotion_threshold = 2.0
 
-        # 각 코어별로 현재 프로세스가 몇 tick 실행되었는지 저장
+        # 각 코어별 실행 시간 기록
         self.time_slice_used = {core.core_id: 0 for core in self.cores}
+        
+        self.p_ready_queue = []
+        self.e_ready_queue = []
+        self.ema_rt = 0.0
 
     def calculate_priority(self, process):
-        # AFHS 우선순위 계산
-        # 대기 시간이 길수록, 남은 실행 시간이 짧을수록 우선순위가 높아짐
+        # 우선순위 계산
+        if process.rt == 0:
+            return 0
         return (process.wt / process.rt) + (self.alpha * process.wt)
 
     def do_schedule(self):
-        # 모든 코어 순회
+        # 부모 클래스가 self.ready_queue에 넣어둔 새 프로세스들을 빼와서 분류
+        while self.ready_queue:
+            p = self.ready_queue.popleft() 
+            
+            if self.ema_rt == 0.0:
+                self.ema_rt = p.rt
+            else:
+                self.ema_rt = (self.ema_rt * 0.8) + (p.rt * 0.2)
+
+            # 평균보다 짧으면 P코어행 길면 E코어행
+            if p.rt < self.ema_rt:
+                self.p_ready_queue.append(p)
+            else:
+                self.e_ready_queue.append(p)
+
+
+        # 선점 조건 체크 및 강제 선점 (Preemption)
         for core in self.cores:
+            if not core.is_idle():
+                # 코어 타입에 따라 TQ 한계치 다르게 적용 (P는 1배 E는 2배)
+                limit = self.time_quantum if core.core_type == 'P' else self.time_quantum * 2
+                
+                if self.time_slice_used[core.core_id] >= limit:
+                    process = core.force_eject()
+                    self.time_slice_used[core.core_id] = 0
+                    
+                    # 방을 뺀 프로세스 재배치 
+                    # 대기 시간이 길어 승격 조건을 만족하면 P코어 큐로
+                    if self.calculate_priority(process) >= self.promotion_threshold:
+                        self.p_ready_queue.append(process)
+                    # 현재의 동적 평균값보다 짧으면 P코어 큐 길면 E코어 큐
+                    elif process.rt < self.ema_rt:
+                        self.p_ready_queue.append(process)
+                    else:
+                        self.e_ready_queue.append(process)
 
-            # 현재 코어에서 실행 중인 프로세스가 time quantum 이상 실행되었는지 확인
-            if not core.is_idle() and self.time_slice_used[core.core_id] >= self.time_quantum:
+        # 승격 조건 확인
+        promoted_processes = []
+        for p in self.e_ready_queue:
+            if self.calculate_priority(p) >= self.promotion_threshold:
+                promoted_processes.append(p)
 
-                # 현재 실행 중인 프로세스를 코어에서 꺼내서 ready_queue로 다시 넣기
-                process = core.force_eject()
-                self.ready_queue.append(process)
+        # 승격 대상자들을 E큐에서 빼서 P큐로 이동
+        for p in promoted_processes:
+            self.e_ready_queue.remove(p)
+            self.p_ready_queue.append(p)
 
-                # 해당 코어의 실행 시간 기록 초기화
-                self.time_slice_used[core.core_id] = 0
 
-        # 모든 코어 순회
-        for core in self.cores:
-
-            # 빈 코어이고 ready_queue가 있는지 확인
-            if core.is_idle() and self.ready_queue:
-
-                # ready_queue 안에서 AFHS 우선순위가 가장 높은 프로세스 찾기
-                # 우선순위가 같으면 남은 실행 시간이 더 짧은 프로세스를 우선 선택
+        # P코어 할당 로직
+        for core in [c for c in self.cores if c.core_type == 'P']:
+            if core.is_idle() and self.p_ready_queue:
                 best_process = max(
-                    self.ready_queue,
+                    self.p_ready_queue,
                     key=lambda p: (self.calculate_priority(p), -p.rt, -p.at, -p.p_id)
                 )
-
-                # 찾은 프로세스를 ready_queue에서 제거
-                self.ready_queue.remove(best_process)
-
-                # 빈 코어에 꺼내온 프로세스 할당
+                self.p_ready_queue.remove(best_process)
                 core.allocate(best_process)
+                self.time_slice_used[core.core_id] = 0
 
-                # 새로 할당된 프로세스의 실행 시간 기록 초기화
+        # E코어 할당 로직
+        for core in [c for c in self.cores if c.core_type == 'E']:
+            if core.is_idle() and self.e_ready_queue:
+                best_process = max(
+                    self.e_ready_queue,
+                    key=lambda p: (self.calculate_priority(p), -p.rt, -p.at, -p.p_id)
+                )
+                self.e_ready_queue.remove(best_process)
+                core.allocate(best_process)
                 self.time_slice_used[core.core_id] = 0
 
     def _run_cores_for_one_tick(self):
-        # 모든 코어를 1초씩 실행
         for core in self.cores:
-
-            # 현재 코어에 프로세스가 있으면 실행 시간 1 증가
             if core.assigned_process is not None:
                 self.time_slice_used[core.core_id] += 1
             else:
                 self.time_slice_used[core.core_id] = 0
 
-            # 코어를 1 tick 실행
             core.process_one_tick()
 
-            # 실행이 끝난 프로세스가 있는지 확인
             if core.assigned_process and core.assigned_process.is_finished():
-
-                # 종료된 프로세스를 코어에서 꺼내기
                 finished_proc = core.force_eject()
-
-                # 반환 시간 계산
                 finished_proc.tt = (self.clock + 1) - finished_proc.at
-
-                # 정규화 반환 시간 계산
+                
                 if finished_proc.bt > 0:
                     finished_proc.ntt = finished_proc.tt / finished_proc.bt
-
-                # 완료된 프로세스 목록에 추가
+                    
                 self.completed_processes.append(finished_proc)
-
-                # 해당 코어의 실행 시간 기록 초기화
                 self.time_slice_used[core.core_id] = 0
+
+    def _increment_waiting_time(self):
+        # 부모 클래스의 메서드 오버라이딩
+        for proc in self.p_ready_queue:
+            proc.wt += 1
+        for proc in self.e_ready_queue:
+            proc.wt += 1

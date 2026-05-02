@@ -14,7 +14,7 @@ class InputPanel(ttk.Frame):
 
     def _build_ui(self):
         # 프로세스 추가 섹션
-        ttk.Label(self, text="[ 프로세스 추가 ]", font=("Arial", 10, "bold")).grid(row=0, column=0, columnspan=2, pady=(0, 5))
+        ttk.Label(self, text="[프로세스 추가]", font=("Arial", 10, "bold")).grid(row=0, column=0, columnspan=2, pady=(0, 5))
         
         ttk.Label(self, text="도착 시간(AT):").grid(row=1, column=0, sticky="e")
         self.entry_at = ttk.Entry(self, width=8)
@@ -27,7 +27,7 @@ class InputPanel(ttk.Frame):
         ttk.Button(self, text="프로세스 추가", command=self.add_process).grid(row=3, column=0, columnspan=2, pady=5)
         
         # 코어 추가 섹션
-        ttk.Label(self, text="[ 다중 코어 추가 ]", font=("Arial", 10, "bold")).grid(row=4, column=0, columnspan=2, pady=(15, 5))
+        ttk.Label(self, text="[다중 코어 추가]", font=("Arial", 10, "bold")).grid(row=4, column=0, columnspan=2, pady=(15, 5))
         
         ttk.Label(self, text="코어 타입:").grid(row=5, column=0, sticky="e")
         self.core_var = tk.StringVar(value="P")
@@ -35,8 +35,8 @@ class InputPanel(ttk.Frame):
         
         ttk.Button(self, text="코어 추가", command=self.add_core).grid(row=6, column=0, columnspan=2, pady=5)
         
-        # 알고리즘 선택 및 시작 섹션
-        ttk.Label(self, text="[ 시뮬레이션 설정 ]", font=("Arial", 10, "bold")).grid(row=7, column=0, columnspan=2, pady=(15, 5))
+        # 알고리즘 선택 및 시작 부분
+        ttk.Label(self, text="[시뮬레이션 설정]", font=("Arial", 10, "bold")).grid(row=7, column=0, columnspan=2, pady=(15, 5))
         
         ttk.Label(self, text="알고리즘:").grid(row=8, column=0, sticky="e")
         self.algo_var = tk.StringVar(value="FCFS")
@@ -59,10 +59,10 @@ class InputPanel(ttk.Frame):
         self.entry_alpha.insert(0, "0.5")
         self.entry_alpha.grid(row=10, column=1, pady=2)
 
-        ttk.Button(self, text="▶ 시뮬레이션 시작", command=self.start_sim).grid(row=11, column=0, columnspan=2, pady=10)
+        ttk.Button(self, text="시뮬레이션 시작", command=self.start_sim).grid(row=11, column=0, columnspan=2, pady=10)
 
         # 현황판
-        ttk.Label(self, text="[ 현재 추가된 항목 ]", font=("Arial", 10, "bold")).grid(row=12, column=0, columnspan=2, pady=(5, 5))
+        ttk.Label(self, text="[현재 추가된 항목]", font=("Arial", 10, "bold")).grid(row=12, column=0, columnspan=2, pady=(5, 5))
         
         list_frame = ttk.Frame(self)
         list_frame.grid(row=13, column=0, columnspan=2, sticky="nsew", padx=5)
@@ -77,7 +77,7 @@ class InputPanel(ttk.Frame):
         # 프로그램이 켜졌을 때 초기 상태 세팅 
         self.on_algo_change()
 
-    # 위젯 숨기기/보이기
+    # 위젯 숨기기 및 보이기
     def on_algo_change(self, event=None):
         algo = self.algo_var.get()
         
@@ -105,7 +105,7 @@ class InputPanel(ttk.Frame):
             at = int(self.entry_at.get())
             bt = int(self.entry_bt.get())
             self.process_data.append((self.p_count, at, bt))
-            self.status_listbox.insert("end", f"📌 P{self.p_count} (AT: {at}, BT: {bt})")
+            self.status_listbox.insert("end", f"P{self.p_count} (AT: {at}, BT: {bt})")
             self.p_count += 1
             self.entry_at.delete(0, 'end')
             self.entry_bt.delete(0, 'end')
@@ -119,7 +119,7 @@ class InputPanel(ttk.Frame):
             return
         c_type = self.core_var.get()
         self.core_data.append((self.c_count, c_type))
-        self.status_listbox.insert("end", f"💻 Core {self.c_count} ({c_type} 타입)")
+        self.status_listbox.insert("end", f"Core {self.c_count} ({c_type} 타입)")
         self.c_count += 1
         self.status_listbox.yview("end")
 
@@ -134,18 +134,18 @@ class InputPanel(ttk.Frame):
         alpha_value = 0.5
         
         try:
-            # RR이거나 Custom일 때만 TQ를 읽어옴
+            # RR이거나 custom일 때만 TQ를 읽어옴
             if algo in ["RR", "Custom"]:
                 tq_value = int(self.entry_tq.get())
                 if tq_value <= 0:
-                    raise ValueError # 타임 퀀텀이 0 이하면 튕겨냄
+                    raise ValueError # 타임 퀀텀이 0 이하면 내보냄
             
-            # Custom일 때만 Alpha를 읽어옴
+            # custom일 때만 Alpha를 읽어옴
             if algo == "Custom":
                 alpha_value = float(self.entry_alpha.get())
                 
         except ValueError:
-            messagebox.showerror("입력 오류", "Time Quantum은 1 이상의 정수, Alpha는 소수점 숫자(예: 0.5)여야 합니다.")
+            messagebox.showerror("입력 오류", "Time Quantum은 1 이상의 정수, Alpha는 소수점 숫자여야 합니다.")
             return
             
         self.start_callback(self.process_data, self.core_data, algo, tq_value, alpha_value)

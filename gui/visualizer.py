@@ -5,11 +5,11 @@ class ResultVisualizer(ttk.Frame):
     def __init__(self, master):
         super().__init__(master)
         
-        # 상단: 간트 차트를 그릴 캔버스
+        # 위는 간트 차트를 그릴 캔버스
         self.canvas = tk.Canvas(self, bg="white", height=250)
         self.canvas.pack(fill="x", pady=5)
         
-        # 하단: 결과표
+        # 아래는 결과표
         columns = ("PID", "AT", "BT", "WT", "TT", "NTT")
         self.tree = ttk.Treeview(self, columns=columns, show="headings", height=8)
         for col in columns:
@@ -34,7 +34,7 @@ class ResultVisualizer(ttk.Frame):
         self.total_power_label.pack(anchor="e", pady=(5, 0))
 
     def draw_gantt(self, cores):
-        # 매 초마다 코어 기록을 읽어와 캔버스를 갱신
+        # 매 초마다 코어 기록을 읽어와 갱신
         self.canvas.delete("all")
         colors = ["#FF9999", "#99CCFF", "#99FF99", "#FFCC99", "#CC99FF", "#FFFF99"]
         
@@ -60,7 +60,7 @@ class ResultVisualizer(ttk.Frame):
                     self.canvas.create_rectangle(x1, y1, x2, y2, fill="#EEEEEE", outline="gray") # 빈 코어 (휴면)
 
     def update_result(self, completed_procs, cores):
-        #시뮬레이션 종료 시 결과 표와 전력을 업데이트
+        # 시뮬레이션 종료 시 결과 표와 전력을 업데이트
         # 기존 표 데이터 초기화
         for item in self.tree.get_children():
             self.tree.delete(item)

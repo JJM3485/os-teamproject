@@ -12,8 +12,8 @@ from scheduler.custom import CustomScheduler
 class SimulatorApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("알고리즘 과제 멀티코어 프로세스 스케줄링 시뮬레이터")
-        self.geometry("900x600")
+        self.title("운영체제 과제 멀티코어 프로세스 스케줄링 시뮬레이터")
+        self.geometry("1000x600")
         
         # 입력 패널
         self.input_panel = InputPanel(self, self.start_simulation)

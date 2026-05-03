@@ -4,7 +4,7 @@ class CustomScheduler(AbstractScheduler):
 
     def __init__(self, process_list, core_list, time_quantum=2, alpha=0.5):
         super().__init__(process_list, core_list)
-
+        # 임계값 설정
         self.time_quantum = time_quantum
         self.alpha = alpha
         self.promotion_threshold = 15.0
